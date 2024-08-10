@@ -21,7 +21,6 @@
             <version>3.21.12</version>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <!-- OS Maven Plugin for detecting OS classifier -->
