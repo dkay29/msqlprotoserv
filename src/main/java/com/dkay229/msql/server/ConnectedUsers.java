@@ -21,7 +21,7 @@ public class ConnectedUsers {
         if (!registeredUsers.containsKey(user)) {
             throw new MsqlException(UNKNOWN_USER,user);
         }
-        if (registeredUsers.get(user).equals(password)) {
+        if (!registeredUsers.get(user).equals(password)) {
             throw new MsqlException(BAD_LOGIN_ATTEMPT,user);
         }
         int connectionId = connectionSequence.incrementAndGet();
