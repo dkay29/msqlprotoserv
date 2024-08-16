@@ -8,6 +8,7 @@ import io.grpc.Server;
 
 
 import com.dkay229.msql.proto.Dbserver;
+import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,7 +22,6 @@ import static io.grpc.ServerBuilder.forPort;
 
 @Slf4j
 public class DatabaseServer {
-
     public static void main(String[] args) throws IOException, InterruptedException {
         Server server = forPort(8080)
                 .addService(new DatabaseServiceImpl())
@@ -32,6 +32,7 @@ public class DatabaseServer {
     }
 
     static class DatabaseServiceImpl extends DatabaseServiceGrpc.DatabaseServiceImplBase {
+        ConnectedUsers connectedUsers = new ConnectedUsers();
 
         @Override
         public void executeQuery(Dbserver.QueryRequest request, StreamObserver<Dbserver.QueryResponse> responseObserver) {
@@ -84,10 +85,24 @@ public class DatabaseServer {
                     .build();
             responseObserver.onNext(sampleMessage);
             responseObserver.onCompleted();
-
-
-
-
+        }
+        @Override
+        public void login(Dbserver.LoginRequest loginRequest, StreamObserver<Dbserver.Connection> responseObserver) {
+            String connectionId="";
+            String errorMesg="";
+            try {
+                connectionId=""+this.connectedUsers.login(loginRequest.getUserId(),loginRequest.getToken());
+                log.info("user "+loginRequest.getUserId()+" logged in to connection "+connectionId);
+            } catch (Exception e) {
+                log.error("user "+loginRequest.getUserId(),e);
+                errorMesg=e.toString();
+            }
+            Dbserver.Connection connection = Dbserver.Connection.newBuilder()
+                    .setConnectionId(connectionId)
+                    .setErrorMessage(errorMesg)
+                    .build();
+            responseObserver.onNext(connection);
+            responseObserver.onCompleted();
         }
     }
 }

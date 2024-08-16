@@ -47,6 +47,11 @@
             <artifactId>mproto</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.dkay229</groupId>
+            <artifactId>mcommon</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- Protocol Buffers Java runtime library -->
         <!-- gRPC runtime -->
         <dependency>
