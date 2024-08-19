@@ -91,8 +91,8 @@ public class DatabaseServer {
             String connectionId="";
             String errorMesg="";
             try {
-                connectionId=""+this.connectedUsers.login(loginRequest.getUserId(),loginRequest.getToken());
-                log.info("user "+loginRequest.getUserId()+" logged in to connection "+connectionId);
+                ConnectedUser user = connectedUsers.login(loginRequest.getUserId(), loginRequest.getToken());
+                log.info("logged in "+user);
             } catch (Exception e) {
                 log.error("user "+loginRequest.getUserId(),e);
                 errorMesg=e.toString();
