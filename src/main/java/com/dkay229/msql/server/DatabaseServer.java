@@ -1,22 +1,13 @@
 package com.dkay229.msql.server;
 
 
-
-
 import com.dkay229.msql.proto.DatabaseServiceGrpc;
-import io.grpc.Server;
-
-
 import com.dkay229.msql.proto.Dbserver;
-import io.grpc.stub.ServerCalls;
+import io.grpc.Server;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
 
 import static io.grpc.ServerBuilder.forPort;
 
@@ -35,75 +26,40 @@ public class DatabaseServer {
         ConnectedUsers connectedUsers = new ConnectedUsers();
 
         @Override
-        public void executeQuery(Dbserver.QueryRequest request, StreamObserver<Dbserver.QueryResponse> responseObserver) {
+        public void executeQuery(Dbserver.ExecuteQueryRequest request, StreamObserver<Dbserver.ExecuteQueryResponse> responseObserver) {
             // Simulate a database query. In a real-world scenario, this would involve database access.
             log.info("Received SQL Query: " + request.getSql());
 
-            // Simulate the result rows
-            List<String> resultRows = new ArrayList<>();
-            resultRows.add("Result row 1 for query: " + request.getSql());
-            resultRows.add("Result row 2 for query: " + request.getSql());
 
-            Dbserver.QueryResponse response = Dbserver.QueryResponse.newBuilder()
-                    .addAllRows(resultRows)
-                    .build();
+            Dbserver.ExecuteQueryResponse response = Dbserver.ExecuteQueryResponse.newBuilder()
+                    .setRowMetadata(Dbserver.RowMetadata.newBuilder().addColumns(
+                                    Dbserver.ColumnMetadata.newBuilder()
+                                            .setName("column1")
+                                            .setType(Dbserver.ColumnMetadata.TypeEnum.STRING)
+                                            .setSize(50).build()
+                            )
+                            .build()).build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
-
         @Override
-        public void getUser(Dbserver.User request, StreamObserver<Dbserver.User> responseObserver) {
-            // Simulate user retrieval. In a real-world scenario, this would involve database access.
-            log.info("Retrieving user with ID: " + request.getId());
-
-            Dbserver.User user = Dbserver.User.newBuilder()
-                    .setId(request.getId())
-                    .setName("John Doe")
-                    .setEmail("john.doe@example.com")
-                    .build();
-
-            responseObserver.onNext(user);
-            responseObserver.onCompleted();
-        }
-
-        @Override
-        public void getRandomSampleMessage(Dbserver.SampleRequest request, StreamObserver<Dbserver.SampleMessage> responseObserver) {
-            log.info("Received request for a random sample message");
-            Random random = new Random();
-            Dbserver.SampleMessage sampleMessage = Dbserver.SampleMessage.newBuilder()
-                    .setMyNestedMessage(Dbserver.SampleMessage.NestedMessage.newBuilder()
-                            .setNestedField("nested field")
-                    )
-                    .setMyDouble(random.nextDouble())
-                    .setMyInt32(random.nextInt())
-                    .setMyFixed64(random.nextLong())
-                    .setMyEnum(Dbserver.SampleMessage.MyEnum.OPTION_TWO)
-                    .addAllMyRepeatedInt32(Arrays.asList(random.nextInt(), random.nextInt(), random.nextInt()))
-                    .addAllMyRepeatedString(Arrays.asList("string 1", "string 2", "string 3"))
-                    .setMyString("random string")
-                    .build();
-            responseObserver.onNext(sampleMessage);
-            responseObserver.onCompleted();
-        }
-        @Override
-        public void login(Dbserver.LoginRequest loginRequest, StreamObserver<Dbserver.Connection> responseObserver) {
-            String connectionId="";
-            String errorMesg="";
+        public void login(Dbserver.LoginRequest loginRequest, StreamObserver<Dbserver.LoginResponse> responseObserver) {
             try {
-                ConnectedUser user = connectedUsers.login(loginRequest.getUserId(), loginRequest.getToken());
-                log.info("logged in "+user);
+                ConnectedUser connectedUser = connectedUsers.login(loginRequest.getUserId(), loginRequest.getToken());
+                Dbserver.LoginResponse loginResponse = Dbserver.LoginResponse.newBuilder()
+                        .setConnectionId(connectedUser.getConnectionId())
+                        .setConnectionKey(connectedUser.getConnectionKey())
+                        .build();
+                responseObserver.onNext(loginResponse);
+                log.info("logged in "+connectedUser);
             } catch (Exception e) {
+                responseObserver.onNext(Dbserver.LoginResponse.newBuilder().setErrorMessage(e.toString()).build());
                 log.error("user "+loginRequest.getUserId(),e);
-                errorMesg=e.toString();
             }
-            Dbserver.Connection connection = Dbserver.Connection.newBuilder()
-                    .setConnectionId(connectionId)
-                    .setErrorMessage(errorMesg)
-                    .build();
-            responseObserver.onNext(connection);
             responseObserver.onCompleted();
         }
+
     }
 }
 
